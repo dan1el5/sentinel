@@ -20,10 +20,18 @@ export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) 
   const mapRef = useRef<MapRef>(null)
 
   useEffect(() => {
-    if (selectedEvent && mapRef.current) {
+    if (!mapRef.current) return
+    if (selectedEvent) {
       mapRef.current.flyTo({
         center: [selectedEvent.lng, selectedEvent.lat],
         zoom: 5,
+        duration: 1800,
+        essential: true,
+      })
+    } else {
+      mapRef.current.flyTo({
+        center: [0, 20],
+        zoom: 1.8,
         duration: 1800,
         essential: true,
       })
