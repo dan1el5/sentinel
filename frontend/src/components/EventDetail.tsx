@@ -124,7 +124,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
             <path d="M2 12 L7 7 L9 9 L12 3 L15 15 L17 11 L19 13 L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
 
-          <p className="text-neutral-700 text-[10px] font-mono uppercase tracking-widest">Awaiting target selection</p>
+          <p className="text-neutral-700 text-[10px] font-mono uppercase tracking-widest">Awaiting event selection</p>
         </div>
       ) : (
         <div className="relative bg-neutral-950/60">

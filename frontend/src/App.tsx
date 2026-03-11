@@ -29,7 +29,7 @@ function App() {
         <div className="px-5 py-4 border-b border-neutral-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <h1 className="text-sm font-semibold tracking-[0.2em] uppercase">Sentinel</h1>
+            <h1 className="text-sm font-display font-bold tracking-[0.2em] uppercase">Sentinel</h1>
           </div>
           <span className="text-xs text-neutral-500 font-mono">{allEvents.length} events</span>
         </div>
