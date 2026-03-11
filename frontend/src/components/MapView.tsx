@@ -19,6 +19,15 @@ interface MapViewProps {
 export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) {
   const mapRef = useRef<MapRef>(null)
 
+  if (!config.mapboxToken) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center bg-neutral-950">
+        <p className="font-mono text-lg text-neutral-500">Map unavailable</p>
+        <p className="font-mono text-sm text-neutral-600">Mapbox token not configured</p>
+      </div>
+    )
+  }
+
   useEffect(() => {
     if (!mapRef.current) return
     if (selectedEvent) {
