@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { config } from '../config/env'
 import type { SeismicEvent, SeverityFilter } from '../types/event'
 
 const EVENTS_QUERY = `
-  query GetEvents($severity: String) {
-    events(severity: $severity) {
+  query GetEvents {
+    events {
       id
       lat
       lng
@@ -20,13 +20,14 @@ const EVENTS_QUERY = `
 `
 
 interface UseEventsResult {
+  allEvents: SeismicEvent[]
   events: SeismicEvent[]
   loading: boolean
   error: string | null
 }
 
 export function useEventsGQL(severity: SeverityFilter): UseEventsResult {
-  const [events, setEvents] = useState<SeismicEvent[]>([])
+  const [allEvents, setAllEvents] = useState<SeismicEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,10 +42,7 @@ export function useEventsGQL(severity: SeverityFilter): UseEventsResult {
         const response = await fetch(`${config.apiUrl}/graphql`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: EVENTS_QUERY,
-            variables: { severity: severity ?? null },
-          }),
+          body: JSON.stringify({ query: EVENTS_QUERY }),
           signal: controller.signal,
         })
 
@@ -58,7 +56,7 @@ export function useEventsGQL(severity: SeverityFilter): UseEventsResult {
           throw new Error(json.errors[0].message)
         }
 
-        setEvents(json.data.events)
+        setAllEvents(json.data.events)
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           setError(err.message)
@@ -71,7 +69,12 @@ export function useEventsGQL(severity: SeverityFilter): UseEventsResult {
     fetchEvents()
 
     return () => controller.abort()
-  }, [severity])
+  }, [])
 
-  return { events, loading, error }
+  const events = useMemo(
+    () => severity ? allEvents.filter((e) => e.severity === severity) : allEvents,
+    [allEvents, severity],
+  )
+
+  return { allEvents, events, loading, error }
 }
