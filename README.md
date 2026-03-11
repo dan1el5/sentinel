@@ -4,7 +4,7 @@ Real-time seismic event monitoring dashboard. Ingests live earthquake data from 
 
 **[Live Demo](https://sentinel-six-kappa.vercel.app)**
 
-https://github.com/user-attachments/assets/c77e3c77-1310-4493-94f7-3c1e70b48a7f
+![Sentinel](https://github.com/user-attachments/assets/c77e3c77-1310-4493-94f7-3c1e70b48a7f)
 
 ## Stack
 
