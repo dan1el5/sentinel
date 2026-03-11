@@ -1,5 +1,4 @@
 import type { SeismicEvent } from '../types/event'
-import { SeverityBadge } from './ui/SeverityBadge'
 
 const severityAccent: Record<string, string> = {
   critical: 'border-l-red-500',
@@ -8,7 +7,21 @@ const severityAccent: Record<string, string> = {
   low: 'border-l-emerald-500',
 }
 
-const severityBarColor: Record<string, string> = {
+const severityColor: Record<string, string> = {
+  critical: 'text-red-500',
+  high: 'text-orange-500',
+  medium: 'text-yellow-500',
+  low: 'text-emerald-500',
+}
+
+const severityRing: Record<string, string> = {
+  critical: 'ring-red-500/30',
+  high: 'ring-orange-500/30',
+  medium: 'ring-yellow-500/30',
+  low: 'ring-emerald-500/30',
+}
+
+const severityBg: Record<string, string> = {
   critical: 'bg-red-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
@@ -21,10 +34,6 @@ interface EventDetailProps {
   onClose: () => void
 }
 
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleString()
-}
-
 function timeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime()
   const minutes = Math.floor(diff / 60000)
@@ -34,7 +43,33 @@ function timeAgo(timestamp: string): string {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-function depthClass(depth: number): { label: string; color: string } {
+function formatTime(timestamp: string): string {
+  return new Date(timestamp).toLocaleString()
+}
+
+function formatEnergy(mag: number): string {
+  const logE = 1.5 * mag + 4.8
+  const energy = Math.pow(10, logE)
+  if (energy >= 1e15) return `${(energy / 1e15).toFixed(1)} PJ`
+  if (energy >= 1e12) return `${(energy / 1e12).toFixed(1)} TJ`
+  if (energy >= 1e9) return `${(energy / 1e9).toFixed(1)} GJ`
+  if (energy >= 1e6) return `${(energy / 1e6).toFixed(1)} MJ`
+  return `${(energy / 1e3).toFixed(1)} kJ`
+}
+
+function tntEquivalent(mag: number): string {
+  const logE = 1.5 * mag + 4.8
+  const joules = Math.pow(10, logE)
+  const tntJoules = 4.184e9
+  const tnt = joules / tntJoules
+  if (tnt >= 1e6) return `${(tnt / 1e6).toFixed(1)}M tons TNT`
+  if (tnt >= 1e3) return `${(tnt / 1e3).toFixed(1)}k tons TNT`
+  if (tnt >= 1) return `${tnt.toFixed(1)} tons TNT`
+  if (tnt >= 0.001) return `${(tnt * 1000).toFixed(0)} kg TNT`
+  return `${(tnt * 1e6).toFixed(0)} g TNT`
+}
+
+function depthLabel(depth: number): { label: string; color: string } {
   if (depth < 70) return { label: 'Shallow', color: 'text-emerald-400' }
   if (depth < 300) return { label: 'Intermediate', color: 'text-yellow-400' }
   return { label: 'Deep', color: 'text-red-400' }
@@ -51,147 +86,150 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 export function EventDetail({ event, events, onClose }: EventDetailProps) {
-  if (!event) {
-    return (
-      <div className="h-full flex flex-col p-5">
-        <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium mb-4">Event Detail</p>
-        <div className="flex-1 flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-neutral-900/60 rounded-lg p-3 h-[68px]">
-                <div className="h-2 w-12 bg-neutral-800 rounded animate-pulse mb-2.5" style={{ animationDelay: `${i * 100}ms` }} />
-                <div className="h-5 w-10 bg-neutral-800 rounded animate-pulse" style={{ animationDelay: `${i * 100 + 50}ms` }} />
-              </div>
-            ))}
-          </div>
-          <div className="bg-neutral-900/60 rounded-lg p-3 h-10">
-            <div className="h-2 w-full bg-neutral-800 rounded animate-pulse" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-neutral-900/60 rounded-lg p-3 h-14">
-                <div className="h-2 w-14 bg-neutral-800 rounded animate-pulse mb-2" style={{ animationDelay: `${i * 80 + 200}ms` }} />
-                <div className="h-3 w-20 bg-neutral-800 rounded animate-pulse" style={{ animationDelay: `${i * 80 + 250}ms` }} />
-              </div>
-            ))}
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-neutral-600 text-xs">Select an event to view details</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const depth = event ? depthLabel(event.depth) : null
+  const depthPercent = event ? Math.min((event.depth / 700) * 100, 100) : 0
 
-  const magPercent = Math.min((event.magnitude / 10) * 100, 100)
-  const magnitudes = events.map((e) => e.magnitude).sort((a, b) => a - b)
-  const rank = magnitudes.filter((m) => m <= event.magnitude).length
-  const percentile = Math.round((rank / magnitudes.length) * 100)
-  const depth = depthClass(event.depth)
-  const nearbyCount = events.filter(
-    (e) => e.id !== event.id && haversineDistance(event.lat, event.lng, e.lat, e.lng) < 500,
-  ).length
-  const strongerCount = events.filter((e) => e.magnitude > event.magnitude).length
+  const nearby = event
+    ? events
+        .filter((e) => e.id !== event.id)
+        .map((e) => ({ ...e, dist: haversineDistance(event.lat, event.lng, e.lat, e.lng) }))
+        .filter((e) => e.dist < 500)
+        .sort((a, b) => a.dist - b.dist)
+    : []
+
+  const strongerCount = event ? events.filter((e) => e.magnitude > event.magnitude).length : 0
+  const totalEvents = events.length
 
   return (
-    <div className={`h-full flex flex-col p-5 border-l-4 ${severityAccent[event.severity]}`}>
-      <div className="flex items-center justify-between mb-3">
+    <div className={`flex flex-col p-5 ${event ? '' : 'h-full'}`}>
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Event Detail</p>
         <button
           onClick={onClose}
-          className="text-neutral-500 hover:text-neutral-50 hover:bg-neutral-800 rounded-full w-6 h-6 flex items-center justify-center transition-all duration-150 text-xs"
+          className={`text-neutral-500 hover:text-neutral-50 hover:bg-neutral-800 rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200 ease-out text-xs hover:scale-110 hover:rotate-90 active:scale-95 ${event ? 'visible' : 'invisible'}`}
         >
           &#x2715;
         </button>
       </div>
 
-      <h3 className="text-neutral-50 font-semibold text-sm leading-snug mb-1">{event.place}</h3>
-      <p className="text-[10px] text-neutral-500 mb-4">{timeAgo(event.timestamp)}</p>
+      {!event ? (
+        <div className="relative flex-1 bg-neutral-950/60 overflow-hidden flex flex-col items-center justify-center">
+          {/* Corner brackets */}
+          <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-neutral-700/50" />
+          <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-neutral-700/50" />
+          <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-neutral-700/50" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-neutral-700/50" />
 
-      <div className="grid grid-cols-3 gap-3 mb-3">
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Magnitude</p>
-          <p className="text-neutral-50 font-mono text-xl font-semibold">{event.magnitude.toFixed(1)}</p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Depth</p>
-          <p className="text-neutral-50 font-mono text-xl font-semibold">{event.depth.toFixed(1)}<span className="text-[10px] text-neutral-500 ml-1">km</span></p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Severity</p>
-          <div className="mt-1.5"><SeverityBadge severity={event.severity} /></div>
-        </div>
-      </div>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-neutral-700 mb-3">
+            <path d="M2 12 L7 7 L9 9 L12 3 L15 15 L17 11 L19 13 L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
 
-      <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5 mb-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500">Magnitude Scale</p>
-          <p className="text-[10px] text-neutral-500">Top {100 - percentile}% of events</p>
+          <p className="text-neutral-700 text-[10px] font-mono uppercase tracking-widest">Awaiting target selection</p>
         </div>
-        <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ease-out ${severityBarColor[event.severity]}`}
-            style={{ width: `${magPercent}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-1">
-          <span className="text-[9px] text-neutral-600">0</span>
-          <span className="text-[9px] text-neutral-600">10</span>
-        </div>
-      </div>
+      ) : (
+        <div className="relative bg-neutral-950/60">
+          {/* Severity accent bar */}
+          <div className={`absolute top-8 bottom-8 left-0 w-0.5 ${severityBg[event.severity]} z-10 pointer-events-none`} />
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Depth Class</p>
-          <p className={`text-xs font-medium ${depth.color}`}>{depth.label}</p>
-          <p className="text-[10px] text-neutral-600 mt-0.5">
-            {event.depth < 70 ? '< 70 km' : event.depth < 300 ? '70–300 km' : '> 300 km'}
-          </p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Nearby Events</p>
-          <p className="text-neutral-50 font-mono text-sm font-semibold">{nearbyCount}</p>
-          <p className="text-[10px] text-neutral-600 mt-0.5">within 500 km</p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Coordinates</p>
-          <p className="text-neutral-300 font-mono text-xs">{event.lat.toFixed(4)}, {event.lng.toFixed(4)}</p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Ranking</p>
-          <p className="text-neutral-300 text-xs">{strongerCount === 0 ? 'Strongest event' : `${strongerCount} stronger`}</p>
-        </div>
-      </div>
+          {/* Corner brackets */}
+          <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-neutral-700/50 z-10 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-neutral-700/50 z-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-neutral-700/50 z-10 pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-neutral-700/50 z-10 pointer-events-none" />
 
-      {event.tsunami && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-2.5 rounded-lg text-xs font-medium mb-3">
-          <span className="animate-pulse">&#x26A0;</span> Tsunami alert issued for this event
+          <div className="p-4">
+            <div className="flex items-center gap-4 mb-5">
+            <div className={`w-14 h-14 rounded-full bg-neutral-900 ring-2 ${severityRing[event.severity]} flex items-center justify-center shrink-0`}>
+              <span className={`font-mono text-xl font-bold ${severityColor[event.severity]}`}>{event.magnitude.toFixed(1)}</span>
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-neutral-50 font-semibold text-sm leading-snug">{event.place}</h3>
+              <p className="text-[10px] text-neutral-500 mt-0.5">{timeAgo(event.timestamp)} · Rank {strongerCount + 1} of {totalEvents}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-neutral-900/80 rounded-lg px-3 py-3 transition-all duration-200 ease-out hover:bg-neutral-800/80">
+              <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Depth</p>
+              <div className="flex items-baseline gap-1.5 mb-2">
+                <span className="text-neutral-50 font-mono text-lg font-semibold">{event.depth.toFixed(1)}</span>
+                <span className="text-[10px] text-neutral-500">km</span>
+                <span className={`text-[10px] font-medium ml-auto ${depth.color}`}>{depth.label}</span>
+              </div>
+              <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${severityBg[event.severity]}`}
+                  style={{ width: `${depthPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-0.5">
+                <span className="text-[8px] text-neutral-600">0 km</span>
+                <span className="text-[8px] text-neutral-600">700 km</span>
+              </div>
+            </div>
+
+            <div className="bg-neutral-900/80 rounded-lg px-3 py-3 transition-all duration-200 ease-out hover:bg-neutral-800/80">
+              <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Energy Released</p>
+              <p className="text-neutral-50 font-mono text-lg font-semibold mb-0.5">{formatEnergy(event.magnitude)}</p>
+              <p className="text-[10px] text-neutral-500">&#x2248; {tntEquivalent(event.magnitude)}</p>
+            </div>
+
+            <div className="bg-neutral-900/80 rounded-lg px-3 py-3 transition-all duration-200 ease-out hover:bg-neutral-800/80">
+              <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Nearby Activity</p>
+              <p className="text-neutral-50 font-mono text-lg font-semibold mb-0.5">{nearby.length}</p>
+              {nearby.length > 0 ? (
+                <p className="text-[10px] text-neutral-500 truncate">Closest: {nearby[0].place} ({Math.round(nearby[0].dist)} km)</p>
+              ) : (
+                <p className="text-[10px] text-neutral-500">No events within 500 km</p>
+              )}
+            </div>
+
+            <div className="bg-neutral-900/80 rounded-lg px-3 py-3 transition-all duration-200 ease-out hover:bg-neutral-800/80">
+              <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Tsunami Status</p>
+              {event.tsunami ? (
+                <>
+                  <p className="text-amber-400 font-semibold text-sm mb-0.5"><span className="animate-pulse">&#x26A0;</span> Alert Issued</p>
+                  <p className="text-[10px] text-neutral-500">Coastal warnings active</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-neutral-400 text-sm mb-0.5">None</p>
+                  <p className="text-[10px] text-neutral-500">No coastal threat detected</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] mb-3">
+            <div className="flex justify-between py-1.5 border-b border-neutral-800/60">
+              <span className="uppercase tracking-wider text-neutral-500">Coordinates</span>
+              <span className="text-neutral-300 font-mono">{event.lat.toFixed(4)}, {event.lng.toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b border-neutral-800/60">
+              <span className="uppercase tracking-wider text-neutral-500">Severity</span>
+              <span className={`font-medium capitalize ${severityColor[event.severity]}`}>{event.severity}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b border-neutral-800/60">
+              <span className="uppercase tracking-wider text-neutral-500">Time</span>
+              <span className="text-neutral-300">{formatTime(event.timestamp)}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b border-neutral-800/60">
+              <span className="uppercase tracking-wider text-neutral-500">Event ID</span>
+              <span className="text-neutral-300 font-mono">{event.id}</span>
+            </div>
+          </div>
+
+          <a
+            href={event.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group/link inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs transition-colors duration-200"
+          >
+            View on USGS <span className="inline-block transition-transform duration-200 ease-out group-hover/link:translate-x-1">&#x2192;</span>
+          </a>
+          </div>
         </div>
       )}
-
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Time (UTC)</p>
-          <p className="text-neutral-300 text-xs">{formatTime(event.timestamp)}</p>
-        </div>
-        <div className="bg-neutral-900/80 rounded-lg px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Tsunami Risk</p>
-          <p className={`text-xs font-medium ${event.tsunami ? 'text-amber-400' : 'text-neutral-500'}`}>
-            {event.tsunami ? 'Alert Issued' : 'None'}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-auto">
-        <a
-          href={event.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs transition-colors duration-150"
-        >
-          View on USGS &#x2192;
-        </a>
-      </div>
     </div>
   )
 }
