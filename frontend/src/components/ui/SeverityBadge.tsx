@@ -12,7 +12,7 @@ interface SeverityBadgeProps {
 export function SeverityBadge({ severity }: SeverityBadgeProps) {
   const colors = severityColors[severity]
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors.text} ${colors.bg} ${severity === 'critical' ? 'animate-pulse' : ''}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium capitalize transition-transform duration-200 ease-out group-hover:scale-110 ${colors.text} ${colors.bg} ${severity === 'critical' ? 'animate-pulse' : ''}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
       {severity}
     </span>

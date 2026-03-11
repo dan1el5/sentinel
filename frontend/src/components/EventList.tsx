@@ -11,20 +11,20 @@ const severities: Array<'critical' | 'high' | 'medium' | 'low'> = [
 
 const severityStyles: Record<string, { active: string; inactive: string }> = {
   critical: {
-    active: 'bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.3)]',
-    inactive: 'bg-neutral-800/80 text-red-400 border border-neutral-700/50 hover:bg-neutral-800',
+    active: 'bg-red-500 text-white border border-transparent shadow-[0_0_12px_rgba(239,68,68,0.4)]',
+    inactive: 'bg-neutral-800/80 text-red-400 border border-neutral-700/50 hover:bg-red-500/10 hover:border-red-500/30',
   },
   high: {
-    active: 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.3)]',
-    inactive: 'bg-neutral-800/80 text-orange-400 border border-neutral-700/50 hover:bg-neutral-800',
+    active: 'bg-orange-500 text-white border border-transparent shadow-[0_0_12px_rgba(249,115,22,0.4)]',
+    inactive: 'bg-neutral-800/80 text-orange-400 border border-neutral-700/50 hover:bg-orange-500/10 hover:border-orange-500/30',
   },
   medium: {
-    active: 'bg-yellow-500 text-white shadow-[0_0_8px_rgba(234,179,8,0.3)]',
-    inactive: 'bg-neutral-800/80 text-yellow-400 border border-neutral-700/50 hover:bg-neutral-800',
+    active: 'bg-yellow-500 text-white border border-transparent shadow-[0_0_12px_rgba(234,179,8,0.4)]',
+    inactive: 'bg-neutral-800/80 text-yellow-400 border border-neutral-700/50 hover:bg-yellow-500/10 hover:border-yellow-500/30',
   },
   low: {
-    active: 'bg-emerald-500 text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]',
-    inactive: 'bg-neutral-800/80 text-emerald-400 border border-neutral-700/50 hover:bg-neutral-800',
+    active: 'bg-emerald-500 text-white border border-transparent shadow-[0_0_12px_rgba(16,185,129,0.4)]',
+    inactive: 'bg-neutral-800/80 text-emerald-400 border border-neutral-700/50 hover:bg-emerald-500/10 hover:border-emerald-500/30',
   },
 }
 
@@ -39,6 +39,7 @@ function formatTime(timestamp: string): string {
 
 interface EventListProps {
   events: SeismicEvent[]
+  allEvents: SeismicEvent[]
   selectedEvent: SeismicEvent | null
   onSelectEvent: (event: SeismicEvent) => void
   activeFilter: SeverityFilter
@@ -46,7 +47,7 @@ interface EventListProps {
   onScrollProgress?: (progress: number) => void
 }
 
-export function EventList({ events, selectedEvent, onSelectEvent, activeFilter, onFilterChange, onScrollProgress }: EventListProps) {
+export function EventList({ events, allEvents, selectedEvent, onSelectEvent, activeFilter, onFilterChange, onScrollProgress }: EventListProps) {
   const selectedRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -73,13 +74,13 @@ export function EventList({ events, selectedEvent, onSelectEvent, activeFilter, 
 
   const counts = severities.reduce(
     (acc, s) => {
-      acc[s] = events.filter((e) => e.severity === s).length
+      acc[s] = allEvents.filter((e) => e.severity === s).length
       return acc
     },
     {} as Record<string, number>,
   )
 
-  const tsunamiCount = events.filter((e) => e.tsunami).length
+  const tsunamiCount = allEvents.filter((e) => e.tsunami).length
 
   return (
     <>
@@ -95,19 +96,19 @@ export function EventList({ events, selectedEvent, onSelectEvent, activeFilter, 
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => onFilterChange(null)}
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 ${
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all duration-200 ease-out active:scale-95 hover:scale-105 focus:outline-none ${
               activeFilter === null
-                ? 'bg-neutral-50 text-black'
-                : 'bg-neutral-800/80 text-neutral-400 border border-neutral-700/50 hover:bg-neutral-800'
+                ? 'bg-neutral-50 text-black border border-transparent shadow-[0_0_12px_rgba(255,255,255,0.15)]'
+                : 'bg-neutral-800/80 text-neutral-400 border border-neutral-700/50 hover:bg-neutral-700/80 hover:text-neutral-300'
             }`}
           >
-            All ({events.length})
+            All
           </button>
           {severities.map((s) => (
             <button
               key={s}
               onClick={() => onFilterChange(activeFilter === s ? null : s)}
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium capitalize transition-all duration-150 active:scale-95 ${
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium capitalize transition-all duration-200 ease-out active:scale-95 hover:scale-105 focus:outline-none ${
                 activeFilter === s ? severityStyles[s].active : severityStyles[s].inactive
               }`}
             >
@@ -131,22 +132,22 @@ export function EventList({ events, selectedEvent, onSelectEvent, activeFilter, 
                   key={event.id}
                   ref={isSelected ? selectedRef : null}
                   onClick={() => onSelectEvent(event)}
-                  className={`px-5 py-2.5 cursor-pointer transition-all duration-150 ease-out flex items-center gap-3
+                  className={`group px-5 py-2.5 cursor-pointer transition-all duration-200 ease-out flex items-center gap-3
                     ${isSelected
                       ? 'bg-cyan-950/40 border-l-2 border-l-cyan-400 shadow-[inset_2px_0_12px_-4px_rgba(34,211,238,0.15)]'
-                      : 'border-l-2 border-l-transparent hover:bg-neutral-800/60'
+                      : 'border-l-2 border-l-transparent hover:bg-neutral-800/60 hover:pl-6'
                     }
                   `}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-neutral-200 truncate">
+                    <p className={`text-xs truncate transition-colors duration-200 ${isSelected ? 'text-neutral-100' : 'text-neutral-200 group-hover:text-neutral-50'}`}>
                       {event.tsunami && <span className="mr-1 text-amber-400">&#x26A0;</span>}
                       {event.place}
                     </p>
                     <p className="text-[10px] text-neutral-500 mt-0.5">{formatTime(event.timestamp)}</p>
                   </div>
                   <div className="text-right shrink-0 flex items-center gap-2.5">
-                    <span className="text-xs font-mono text-neutral-300">{event.magnitude.toFixed(1)}</span>
+                    <span className={`text-xs font-mono transition-colors duration-200 ${isSelected ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'}`}>{event.magnitude.toFixed(1)}</span>
                     <SeverityBadge severity={event.severity} />
                   </div>
                 </div>
