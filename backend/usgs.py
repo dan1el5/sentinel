@@ -5,7 +5,7 @@ from typing import Any
 
 USGS_URL = (
     "https://earthquake.usgs.gov/fdsnws/event/1/query"
-    "?format=geojson&orderby=time&limit=100&minmagnitude=2.5"
+    "?format=geojson&orderby=time&limit=200&minmagnitude=2.5"
 )
 
 CACHE_TTL = 60  # seconds
