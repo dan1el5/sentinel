@@ -99,6 +99,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Event Detail</p>
         <button
           onClick={onClose}
+          aria-label="Close event detail"
           className={`text-neutral-500 hover:text-neutral-50 hover:bg-neutral-800 rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200 ease-out text-xs hover:scale-110 hover:rotate-90 active:scale-95 ${event ? 'visible' : 'invisible'}`}
         >
           &#x2715;
@@ -216,6 +217,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
             href={event.url}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="View event on USGS website"
             className="group/link inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs transition-colors duration-200"
           >
             View on USGS <span className="inline-block transition-transform duration-200 ease-out group-hover/link:translate-x-1">&#x2192;</span>

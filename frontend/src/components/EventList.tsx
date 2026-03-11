@@ -96,6 +96,7 @@ export function EventList({ events, allEvents, selectedEvent, onSelectEvent, act
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => onFilterChange(null)}
+            aria-label="Filter by all severities"
             className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all duration-200 ease-out active:scale-95 hover:scale-105 focus:outline-none ${
               activeFilter === null
                 ? 'bg-neutral-50 text-black border border-transparent shadow-[0_0_12px_rgba(255,255,255,0.15)]'
@@ -108,6 +109,7 @@ export function EventList({ events, allEvents, selectedEvent, onSelectEvent, act
             <button
               key={s}
               onClick={() => onFilterChange(activeFilter === s ? null : s)}
+              aria-label={`Filter by ${s} severity`}
               className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium capitalize transition-all duration-200 ease-out active:scale-95 hover:scale-105 focus:outline-none ${
                 activeFilter === s ? severityStyles[s].active : severityStyles[s].inactive
               }`}
@@ -124,7 +126,7 @@ export function EventList({ events, allEvents, selectedEvent, onSelectEvent, act
             No events match the current filter
           </div>
         ) : (
-          <div className="divide-y divide-neutral-800/40">
+          <div role="list" className="divide-y divide-neutral-800/40">
             {events.map((event) => {
               const isSelected = selectedEvent?.id === event.id
               return (
@@ -132,6 +134,9 @@ export function EventList({ events, allEvents, selectedEvent, onSelectEvent, act
                   key={event.id}
                   ref={isSelected ? selectedRef : null}
                   onClick={() => onSelectEvent(event)}
+                  role="listitem"
+                  aria-selected={isSelected}
+                  aria-label={event.place}
                   className={`group px-5 py-2.5 cursor-pointer transition-all duration-200 ease-out flex items-center gap-3
                     ${isSelected
                       ? 'bg-cyan-950/40 border-l-2 border-l-cyan-400 shadow-[inset_2px_0_12px_-4px_rgba(34,211,238,0.15)]'

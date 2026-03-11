@@ -17,15 +17,15 @@ function App() {
   if (error) return <ErrorMessage message={error} onRetry={() => setSeverityFilter(severityFilter)} />
 
   return (
-    <div className="flex h-screen bg-black bg-grid text-neutral-50">
-      <div className="w-[60%] h-full">
+    <div className="flex h-screen bg-black bg-grid text-neutral-50" role="main">
+      <div className="w-[60%] h-full" aria-label="Map">
         <MapView
           events={events}
           selectedEvent={selectedEvent}
           onSelectEvent={setSelectedEvent}
         />
       </div>
-      <div className="w-[40%] h-full flex flex-col overflow-hidden border-l border-neutral-800">
+      <div className="w-[40%] h-full flex flex-col overflow-hidden border-l border-neutral-800" aria-label="Event sidebar">
         <div className="px-5 py-4 border-b border-neutral-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
