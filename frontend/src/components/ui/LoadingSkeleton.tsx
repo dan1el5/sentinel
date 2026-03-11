@@ -1,7 +1,7 @@
 export function LoadingSkeleton() {
   return (
-    <div className="flex h-screen bg-black bg-grid text-neutral-50">
-      <div className="w-[60%] h-full bg-neutral-950 flex items-center justify-center relative overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-black bg-grid text-neutral-50">
+      <div className="h-[40vh] md:h-full md:w-[60%] bg-neutral-950 flex items-center justify-center relative overflow-hidden">
         {/* Radar sweep */}
         <div className="relative w-48 h-48">
           {/* Rings */}
@@ -44,7 +44,7 @@ export function LoadingSkeleton() {
         </div>
       </div>
 
-      <div className="w-[40%] h-full flex flex-col border-l border-neutral-800">
+      <div className="flex-1 md:w-[40%] flex flex-col border-t md:border-t-0 md:border-l border-neutral-800">
         {/* Header skeleton */}
         <div className="px-5 py-4 border-b border-neutral-800 shrink-0">
           <div className="h-3 w-24 bg-neutral-800/40 rounded-sm" />

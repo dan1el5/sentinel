@@ -16,6 +16,8 @@ interface MapViewProps {
   onSelectEvent: (event: SeismicEvent) => void
 }
 
+const defaultZoom = typeof window !== 'undefined' && window.innerWidth < 768 ? 0.8 : 1.8
+
 export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) {
   const mapRef = useRef<MapRef>(null)
 
@@ -40,7 +42,7 @@ export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) 
     } else {
       mapRef.current.flyTo({
         center: [0, 20],
-        zoom: 1.8,
+        zoom: defaultZoom,
         duration: 1800,
         essential: true,
       })
@@ -54,7 +56,7 @@ export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) 
       initialViewState={{
         longitude: 0,
         latitude: 20,
-        zoom: 1.8,
+        zoom: defaultZoom,
       }}
       projection={{ name: 'globe' }}
       mapStyle="mapbox://styles/mapbox/dark-v11"

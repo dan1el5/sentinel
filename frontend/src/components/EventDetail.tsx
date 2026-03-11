@@ -142,7 +142,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
             <div className="bg-neutral-900/80 rounded-lg px-3 py-3 transition-all duration-200 ease-out hover:bg-neutral-800/80">
               <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Depth</p>
               <div className="flex items-baseline gap-1.5 mb-2">
@@ -194,7 +194,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[10px] mb-3">
             <div className="flex justify-between py-1.5 border-b border-neutral-800/60">
               <span className="uppercase tracking-wider text-neutral-500">Coordinates</span>
               <span className="text-neutral-300 font-mono">{event.lat.toFixed(4)}, {event.lng.toFixed(4)}</span>
