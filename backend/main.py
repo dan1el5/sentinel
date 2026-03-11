@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from strawberry.fastapi import GraphQLRouter
 
 from usgs import fetch_events, get_cache_status
+from schema import schema
 
 app = FastAPI(title="Sentinel API")
+
+graphql_app = GraphQLRouter(schema)
+app.include_router(graphql_app, prefix="/graphql")
 
 app.add_middleware(
     CORSMiddleware,
