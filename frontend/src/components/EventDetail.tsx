@@ -1,12 +1,5 @@
 import type { SeismicEvent } from '../types/event'
 
-const severityAccent: Record<string, string> = {
-  critical: 'border-l-red-500',
-  high: 'border-l-orange-500',
-  medium: 'border-l-yellow-500',
-  low: 'border-l-emerald-500',
-}
-
 const severityColor: Record<string, string> = {
   critical: 'text-red-500',
   high: 'text-orange-500',
@@ -154,7 +147,7 @@ export function EventDetail({ event, events, onClose }: EventDetailProps) {
               <div className="flex items-baseline gap-1.5 mb-2">
                 <span className="text-neutral-50 font-mono text-lg font-semibold">{event.depth.toFixed(1)}</span>
                 <span className="text-[10px] text-neutral-500">km</span>
-                <span className={`text-[10px] font-medium ml-auto ${depth.color}`}>{depth.label}</span>
+                <span className={`text-[10px] font-medium ml-auto ${depth!.color}`}>{depth!.label}</span>
               </div>
               <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
                 <div
