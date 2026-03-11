@@ -1,12 +1,13 @@
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { useRef, useEffect } from 'react'
+import Map, { Marker, type MapRef } from 'react-map-gl/mapbox'
+import { config } from '../config/env'
 import type { SeismicEvent } from '../types/event'
-import { SeverityBadge } from './ui/SeverityBadge'
 
-const severityColorHex: Record<string, string> = {
-  critical: '#dc2626',
-  high: '#ea580c',
-  medium: '#ca8a04',
-  low: '#16a34a',
+const severityColorHex: Record<SeismicEvent['severity'], string> = {
+  critical: '#ef4444',
+  high: '#f97316',
+  medium: '#eab308',
+  low: '#10b981',
 }
 
 interface MapViewProps {
@@ -15,48 +16,70 @@ interface MapViewProps {
   onSelectEvent: (event: SeismicEvent) => void
 }
 
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleString()
-}
-
 export function MapView({ events, selectedEvent, onSelectEvent }: MapViewProps) {
+  const mapRef = useRef<MapRef>(null)
+
+  useEffect(() => {
+    if (selectedEvent && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [selectedEvent.lng, selectedEvent.lat],
+        zoom: 5,
+        duration: 1800,
+        essential: true,
+      })
+    }
+  }, [selectedEvent])
+
   return (
-    <MapContainer
-      center={[20, 0]}
-      zoom={2}
-      className="h-full w-full"
-      zoomControl={false}
+    <Map
+      ref={mapRef}
+      mapboxAccessToken={config.mapboxToken}
+      initialViewState={{
+        longitude: 0,
+        latitude: 20,
+        zoom: 1.8,
+      }}
+      projection={{ name: 'globe' }}
+      mapStyle="mapbox://styles/mapbox/dark-v11"
+      style={{ width: '100%', height: '100%' }}
+      fog={{
+        color: 'rgb(10, 10, 15)',
+        'high-color': 'rgb(20, 20, 30)',
+        'horizon-blend': 0.08,
+        'space-color': 'rgb(5, 5, 10)',
+        'star-intensity': 0.4,
+      }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      />
       {events.map((event) => {
         const isSelected = selectedEvent?.id === event.id
         return (
-          <CircleMarker
+          <Marker
             key={event.id}
-            center={[event.lat, event.lng]}
-            radius={isSelected ? 12 : 6}
-            pathOptions={{
-              color: isSelected ? '#ffffff' : severityColorHex[event.severity],
-              weight: isSelected ? 2 : 1,
-              fillColor: severityColorHex[event.severity],
-              fillOpacity: 0.8,
+            longitude={event.lng}
+            latitude={event.lat}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation()
+              onSelectEvent(event)
             }}
-            eventHandlers={{ click: () => onSelectEvent(event) }}
           >
-            <Popup>
-              <div className="text-sm space-y-1">
-                <p className="font-medium text-slate-900">{event.place}</p>
-                <p>Magnitude: {event.magnitude}</p>
-                <SeverityBadge severity={event.severity} />
-                <p className="text-xs text-slate-500">{formatTime(event.timestamp)}</p>
-              </div>
-            </Popup>
-          </CircleMarker>
+            <div
+              className={`rounded-full cursor-pointer transition-all duration-300 ease-out
+                ${isSelected
+                  ? 'w-5 h-5 border-2 border-white'
+                  : 'w-3 h-3 border border-transparent hover:scale-150'
+                }
+                ${event.severity === 'critical' && !isSelected ? 'animate-pulse' : ''}
+              `}
+              style={{
+                backgroundColor: severityColorHex[event.severity],
+                boxShadow: isSelected
+                  ? `0 0 16px ${severityColorHex[event.severity]}, 0 0 8px rgba(255,255,255,0.3)`
+                  : `0 0 6px ${severityColorHex[event.severity]}80`,
+              }}
+            />
+          </Marker>
         )
       })}
-    </MapContainer>
+    </Map>
   )
 }
