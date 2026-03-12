@@ -21,13 +21,6 @@ export function LoadingSkeleton() {
                 background: 'linear-gradient(to right, rgba(34, 211, 238, 0.6), transparent)',
               }}
             />
-            <div
-              className="absolute top-1/2 left-1/2 origin-top-left w-24 h-24"
-              style={{
-                background: 'conic-gradient(from 0deg, rgba(34, 211, 238, 0.08), transparent 60deg)',
-                transform: 'rotate(-60deg)',
-              }}
-            />
           </div>
 
           {/* Center dot */}
